@@ -1,4 +1,4 @@
-# 🧠 Manus RAG Agent
+# 🧠RAG Agent
 
 A sophisticated **Retrieval-Augmented Generation (RAG)** application that enables intelligent document Q&A powered by AI. Upload your documents, ask questions, and get accurate answers grounded in your content with source citations.
 
@@ -284,7 +284,5 @@ This project is open source and available under the MIT License.
 For issues, questions, or suggestions, please open an issue on GitHub.
 
 ---
-
-**Built with ❤️ using Manus RAG Agent**
 
 Powered by advanced AI and vector embeddings for intelligent document Q&A.
