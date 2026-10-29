@@ -1,288 +1,155 @@
-# 🧠RAG Agent
+# RAG Agent
 
-A sophisticated **Retrieval-Augmented Generation (RAG)** application that enables intelligent document Q&A powered by AI. Upload your documents, ask questions, and get accurate answers grounded in your content with source citations.
+Ask questions about your own documents. The app indexes document text, searches for relevant passages, and uses an AI model to answer with source references.
 
-![Landing Page](./docs/screenshots/landing-page.png)
+> **Current limitation:** PDF text extraction is not enabled in this branch. Upload `.txt` or `.md` files. PDF uploads will return a clear error until a PDF parser is added.
 
-## ✨ Features
+## What you need
 
-### 📤 Document Management
-- **Easy Upload** — Support for PDF and text files with automatic processing
-- **Smart Indexing** — Documents are automatically chunked and indexed with vector embeddings
-- **Document Library** — Manage all your uploaded documents in one place
-- **One-Click Delete** — Remove documents and their associated data instantly
+- Node.js **22 or newer**
+- [pnpm](https://pnpm.io/installation)
+- A MySQL-compatible database
+- Valid credentials for the configured Manus/Forge AI API, OAuth, and S3-compatible file storage
 
-### 🔍 Intelligent Search
-- **Semantic Search** — Uses vector embeddings to find relevant content based on meaning, not just keywords
-- **Cosine Similarity** — Advanced similarity matching for precise document retrieval
-- **Context Awareness** — Retrieves the most relevant chunks from your documents
+You need working credentials and access to these services; installing the code alone is not enough.
 
-### 🤖 AI-Powered Responses
-- **LLM Integration** — Powered by state-of-the-art language models
-- **Source Citations** — Every answer includes references showing which documents were used
-- **Similarity Scores** — See how relevant each source is to your query
-- **Markdown Support** — Responses are formatted with full markdown rendering
+## Run locally
 
-### 💬 Chat Experience
-- **Conversation History** — All chats are persisted and retrievable
-- **Per-Document Chats** — Have separate conversations for each document
-- **Real-Time Feedback** — Loading states and user-friendly error messages
-- **Elegant UI** — Refined, polished interface with smooth interactions
-
-![Chat Interface](./docs/screenshots/chat-interface.png)
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 22+
-- pnpm (or npm/yarn)
-- MySQL database
-- Manus API credentials (for LLM and storage)
-
-### Installation
+### 1. Download the project
 
 ```bash
-# Clone the repository
 git clone https://github.com/USERASHOKG/rag-agent.git
 cd rag-agent
+```
 
-# Install dependencies
+To test the current reliability changes, switch to the feature branch:
+
+```bash
+git switch feature/rag-reliability
+```
+
+If you cloned the repository without that branch locally, run `git fetch origin` first.
+
+### 2. Install dependencies
+
+```bash
 pnpm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your credentials
-
-# Run database migrations
-pnpm run db:push
-
-# Start the development server
-pnpm run dev
 ```
 
-The application will be available at `http://localhost:3000`
-
-## 🏗️ Architecture
-
-### Tech Stack
-
-**Frontend:**
-- React 19 with TypeScript
-- Tailwind CSS 4 for styling
-- shadcn/ui component library
-- Wouter for routing
-- tRPC for type-safe API calls
-
-**Backend:**
-- Express.js server
-- tRPC for RPC procedures
-- Drizzle ORM for database management
-- MySQL/TiDB database
-- Manus OAuth for authentication
-
-**AI & Storage:**
-- Built-in LLM API for embeddings and responses
-- S3 storage for document files
-- Vector embeddings for semantic search
-
-### Database Schema
-
-```
-Documents
-├── id (PK)
-├── userId (FK)
-├── fileName
-├── fileKey (S3 reference)
-├── fileUrl
-├── fileSize
-├── mimeType
-├── totalChunks
-└── timestamps
-
-Chunks
-├── id (PK)
-├── documentId (FK)
-├── chunkIndex
-├── text
-├── embeddingId (FK)
-└── timestamps
-
-Embeddings
-├── id (PK)
-├── chunkId (FK)
-├── vector (JSON array)
-├── model
-└── timestamps
-
-Messages
-├── id (PK)
-├── userId (FK)
-├── documentId (FK, nullable)
-├── role (user|assistant|system)
-├── content
-├── sourceChunkIds (JSON)
-└── timestamps
-```
-
-## 🔄 How It Works
-
-### 1. Document Upload
-When you upload a document:
-1. File is stored in S3 storage
-2. Text is extracted from PDF or read from text files
-3. Content is split into semantic chunks (1000 chars with overlap)
-4. Each chunk is embedded using the LLM embedding model
-5. Embeddings and metadata are stored in the database
-
-### 2. Query Processing
-When you ask a question:
-1. Your query is converted to an embedding
-2. Cosine similarity search finds the top 5 most relevant chunks
-3. Retrieved chunks are formatted as context
-4. LLM generates a response using the context
-5. Response and source references are saved to chat history
-
-### 3. Response Generation
-The LLM receives:
-- System prompt instructing it to cite sources
-- User query
-- Retrieved document excerpts as context
-- Returns a grounded, cited response
-
-## 📝 API Endpoints
-
-### tRPC Procedures
-
-**Documents:**
-- `rag.uploadDocument` — Upload and process a document
-- `rag.listDocuments` — Get all user's documents
-- `rag.getDocument` — Get document details
-- `rag.deleteDocument` — Delete a document
-
-**Chat:**
-- `rag.queryRAG` — Query documents and get AI response
-- `rag.getChatHistory` — Retrieve conversation history
-
-**Auth:**
-- `auth.me` — Get current user info
-- `auth.logout` — Sign out
-
-## 🎨 Design System
-
-### Color Palette
-- **Primary:** Elegant indigo/purple (`oklch(0.55 0.2 280)`)
-- **Background:** Clean white/dark (`oklch(0.99 0.001 0)` / `oklch(0.12 0.005 280)`)
-- **Accent:** Refined accent colors with high contrast
-- **Destructive:** Red for critical actions
-
-### Typography
-- Clean, modern sans-serif fonts
-- Consistent spacing and sizing
-- Accessible color contrasts
-
-### Components
-- Shadcn/ui for consistent, accessible components
-- Tailwind CSS for utility-first styling
-- Lucide React for beautiful icons
-
-## 🔐 Security
-
-- **OAuth Authentication** — Secure Manus OAuth integration
-- **Private Repository** — Source code is protected
-- **Environment Variables** — Sensitive data in `.env.local`
-- **Database Security** — Indexed queries and proper relationships
-- **File Storage** — S3 with signed URLs
-
-## 📊 Performance
-
-- **Vector Embeddings** — Fast semantic search with cosine similarity
-- **Database Indexing** — Optimized queries on userId, documentId, chunkId
-- **Chunking Strategy** — Semantic chunks with overlap for better context
-- **Caching** — tRPC query caching for repeated requests
-
-## 🛠️ Development
-
-### Project Structure
-
-```
-rag-agent/
-├── client/                 # React frontend
-│   ├── src/
-│   │   ├── pages/         # Page components
-│   │   ├── components/    # Reusable UI components
-│   │   ├── lib/           # Utilities and helpers
-│   │   └── App.tsx        # Main app component
-│   └── index.html
-├── server/                # Express backend
-│   ├── ragRouter.ts       # RAG procedures
-│   ├── documentProcessor.ts # Text processing
-│   ├── db.ts              # Database queries
-│   └── _core/             # Framework code
-├── drizzle/               # Database schema
-│   ├── schema.ts          # Table definitions
-│   └── migrations/        # SQL migrations
-├── shared/                # Shared types
-└── package.json
-```
-
-### Running Tests
+If `pnpm` is not found, install/enable it with Corepack:
 
 ```bash
-# Run unit tests
-pnpm test
-
-# Run type checking
-pnpm check
-
-# Format code
-pnpm format
+corepack enable
+corepack prepare pnpm@10.4.1 --activate
 ```
 
-### Building for Production
+Close and reopen your terminal if the command still is not found.
+
+### 3. Configure environment variables
+
+Create a file named `.env.local` in the project root. This repository does not currently include an `.env.example`, so add the values supplied by your project/service administrator.
+
+Variables used by this app include:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | MySQL/TiDB connection string |
+| `JWT_SECRET` | Secret used to sign session tokens; use a long random value |
+| `VITE_APP_ID` | OAuth/application ID |
+| `OAUTH_SERVER_URL` | OAuth service base URL |
+| `BUILT_IN_FORGE_API_URL` | AI/embedding API base URL |
+| `BUILT_IN_FORGE_API_KEY` | Secret API key for the AI service |
+| `VITE_FRONTEND_FORGE_API_URL` | Frontend API base URL |
+| `VITE_FRONTEND_FORGE_API_KEY` | Frontend API key, if required by your configured service |
+
+Storage credentials/settings may also be required for S3 uploads. Use the exact values expected by your environment. **Never commit `.env.local` or paste secrets into issues or chat.** Variables prefixed with `VITE_` are exposed to the browser build; never put private secrets in them.
+
+### 4. Prepare the database
+
+Make sure the database exists and `DATABASE_URL` is correct, then run:
 
 ```bash
-# Build the project
-pnpm build
-
-# Start production server
-pnpm start
+pnpm db:push
 ```
 
-## 🚀 Deployment
+This project uses Drizzle to generate and apply database migrations. Back up important data before changing a shared database.
 
-The application is ready to deploy on any Node.js hosting platform:
+### 5. Start the app
 
-- **Manus Platform** — Built-in deployment with auto-scaling
-- **Vercel** — Serverless deployment
-- **Railway** — Container-based deployment
-- **Heroku** — Traditional hosting
-- **Self-hosted** — Docker or direct Node.js
-
-### Environment Variables Required
-
-```
-DATABASE_URL=mysql://...
-JWT_SECRET=your-secret-key
-VITE_APP_ID=your-app-id
-OAUTH_SERVER_URL=https://api.manus.im
-BUILT_IN_FORGE_API_URL=https://api.manus.im/forge
-BUILT_IN_FORGE_API_KEY=your-api-key
-VITE_FRONTEND_FORGE_API_KEY=your-frontend-key
-VITE_FRONTEND_FORGE_API_URL=https://api.manus.im/forge
+```bash
+pnpm dev
 ```
 
-## 🤝 Contributing
+Open **http://localhost:3000**. Keep the terminal running while you use the app; press `Ctrl+C` to stop it.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Use the app
 
-## 📄 License
+1. Sign in through the configured authentication provider.
+2. Upload a `.txt` or `.md` document.
+3. Wait for processing/indexing to finish.
+4. Ask a question about the uploaded content.
+5. Check the answer's source references. If no relevant text is found, try a more specific question or a document containing the answer.
 
-This project is open source and available under the MIT License.
+## Common errors
 
-## 🙋 Support
+| Error / symptom | What to check |
+| --- | --- |
+| `pnpm: command not found` | Enable/install pnpm with the Corepack commands above, then reopen the terminal. |
+| `ECONNREFUSED`, database connection error, or migration failure | Ensure MySQL/TiDB is running, the database exists, and `DATABASE_URL` has the correct host, port, username, password, and database name. |
+| Missing environment variable / embedding service is not configured | Check that `.env.local` exists in the project root and contains the required values. Restart `pnpm dev` after editing it. |
+| AI API returns HTTP 401 or 403 | Check the API key and whether it has permission to use the configured service. |
+| AI API returns HTTP 404 | Check the API base URL and endpoint configuration. |
+| AI API returns HTTP 429 | The service may be rate-limiting you or your quota may be exhausted. Wait, check usage/billing, and retry. |
+| PDF upload says extraction is not configured | Expected in this branch. Use a `.txt` or `.md` file until PDF parsing is implemented. |
+| Port 3000 is already in use | Stop the other process using the port, then run `pnpm dev` again. |
+| Blank page or frontend errors | Check the browser developer console and the terminal for the first error; confirm dependencies installed successfully. |
+| Login/OAuth fails | Verify the app ID, OAuth server URL, provider configuration, and allowed callback URL with your environment administrator. |
+| Upload fails at storage | Check S3/storage credentials, bucket permissions, and endpoint configuration. |
+| App starts but answers have no useful sources | Confirm the document indexed successfully and contains selectable/readable text; ask a more focused question. |
 
-For issues, questions, or suggestions, please open an issue on GitHub.
+For debugging, fix the **first** error shown in the terminal, then restart and try again. Do not share API keys, passwords, session cookies, or full secret-bearing environment files when asking for help.
 
----
+## Useful commands
 
-Powered by advanced AI and vector embeddings for intelligent document Q&A.
+```bash
+pnpm dev       # Start development server
+pnpm check     # TypeScript check
+pnpm test      # Run tests
+pnpm build     # Build for production
+pnpm start     # Start production build
+pnpm format    # Format files (may change many files)
+```
+
+If `pnpm test` reports that no tests were found, test files may not yet be configured. Run `pnpm check` and `pnpm build` as additional checks.
+
+## How it works
+
+1. **Upload:** document text is extracted and the file is stored.
+2. **Chunk:** the text is split into smaller, overlapping pieces.
+3. **Embed:** the AI embedding service converts each piece into a numeric vector.
+4. **Retrieve:** a question is embedded and similar document chunks are selected.
+5. **Answer:** the language model uses retrieved passages to generate a response with sources.
+
+## Project structure
+
+```text
+client/                 React frontend
+server/ragRouter.ts     Upload, retrieval, and chat API procedures
+server/documentProcessor.ts  Text extraction, chunking, and embeddings
+server/db.ts            Database operations
+server/_core/           Server and framework setup
+drizzle/                Database schema and migrations
+shared/                 Shared types and utilities
+```
+
+## Before production
+
+- Configure production secrets and storage/database permissions securely.
+- Add automated tests for chunking, failed embeddings, and document cleanup.
+- Add a real PDF parser and test scanned-PDF behavior separately (scanned files need OCR).
+- Run `pnpm check`, `pnpm test`, and `pnpm build`.
+- Review authentication, upload limits, logging, and deployment configuration before exposing the app publicly.
+
+## Contributing
+
+Open an issue describing the problem or submit a pull request with a clear summary and test results.
