@@ -1,37 +1,33 @@
 // Document processing utilities for RAG pipeline
 
 /**
- * Extract text from a PDF file
- * Uses the built-in PDF parsing capability
+ * Extract searchable text from a PDF.
+ * pdf-parse v2 supports in-memory buffers and must be destroyed after parsing.
  */
 export async function extractTextFromPDF(fileBuffer: Buffer): Promise<string> {
+  const { PDFParse } = await import("pdf-parse");
+  const parser = new PDFParse({ data: fileBuffer });
+
   try {
-    // For PDF files, we'll use a simple approach:
-    // Convert PDF to text using the LLM's vision capability or external service
-    // For now, we'll use a placeholder that can be enhanced
-    
-    // In production, you might use a library like pdf-parse or pdfjs-dist
-    // For this implementation, we'll assume text extraction happens server-side
-    const text = await extractPDFText(fileBuffer);
+    const result = await parser.getText();
+    const text = result.text?.trim() ?? "";
+
+    if (!text) {
+      throw new Error(
+        "No selectable text found in this PDF. If it is a scanned document, OCR is required."
+      );
+    }
+
     return text;
   } catch (error) {
+    if (error instanceof Error && error.message.includes("No selectable text")) {
+      throw error;
+    }
     console.error("Error extracting PDF text:", error);
-    throw new Error("Failed to extract text from PDF");
+    throw new Error("Could not read this PDF. Check that it is a valid, unencrypted PDF.");
+  } finally {
+    await parser.destroy();
   }
-}
-
-/**
- * Simple PDF text extraction (placeholder for production use)
- * In production, integrate with pdf-parse or similar library
- */
-async function extractPDFText(buffer: Buffer): Promise<string> {
-  // This is a placeholder. In production, use:
-  // const pdf = await import('pdf-parse');
-  // const data = await pdf(buffer);
-  // return data.text;
-  
-  // For now, return a basic extraction
-  return buffer.toString("utf-8", 0, Math.min(buffer.length, 10000));
 }
 
 /**
@@ -48,71 +44,58 @@ export async function extractTextFromFile(fileBuffer: Buffer, mimeType: string):
 }
 
 /**
- * Split text into chunks with overlap
- * Uses semantic boundaries when possible
+ * Split text into bounded chunks with real overlap.
+ * Prefer paragraph boundaries, but fall back to a character window for long paragraphs.
  */
 export function chunkText(text: string, chunkSize = 1000, overlap = 200): string[] {
+  if (!text.trim()) return [];
+  if (chunkSize < 1 || overlap < 0 || overlap >= chunkSize) {
+    throw new Error("chunkSize must be positive and overlap must be between 0 and chunkSize - 1");
+  }
+
+  const normalized = text.replace(/\r\n/g, "\n").trim();
   const chunks: string[] = [];
-  
-  // Split by paragraphs first for better semantic boundaries
-  const paragraphs = text.split(/\n\n+/);
-  let currentChunk = "";
-  
-  for (const paragraph of paragraphs) {
-    if ((currentChunk + paragraph).length > chunkSize) {
-      if (currentChunk) {
-        chunks.push(currentChunk.trim());
+  let start = 0;
+
+  while (start < normalized.length) {
+    let end = Math.min(start + chunkSize, normalized.length);
+
+    if (end < normalized.length) {
+      const boundary = normalized.lastIndexOf("\n", end);
+      // Use a paragraph boundary only when it does not make the chunk too small.
+      if (boundary > start + Math.floor(chunkSize * 0.6)) {
+        end = boundary;
       }
-      currentChunk = paragraph;
-    } else {
-      currentChunk += (currentChunk ? "\n\n" : "") + paragraph;
     }
+
+    const chunk = normalized.slice(start, end).trim();
+    if (chunk) chunks.push(chunk);
+    if (end >= normalized.length) break;
+
+    // Keep the next chunk overlapping the previous one, while guaranteeing progress.
+    start = Math.max(start + 1, end - overlap);
   }
-  
-  if (currentChunk) {
-    chunks.push(currentChunk.trim());
-  }
-  
-  // If we have very large paragraphs, split them by sentences
-  const finalChunks: string[] = [];
-  for (const chunk of chunks) {
-    if (chunk.length > chunkSize) {
-      const sentences = chunk.match(/[^.!?]+[.!?]+/g) || [chunk];
-      let subChunk = "";
-      
-      for (const sentence of sentences) {
-        if ((subChunk + sentence).length > chunkSize) {
-          if (subChunk) {
-            finalChunks.push(subChunk.trim());
-          }
-          subChunk = sentence;
-        } else {
-          subChunk += sentence;
-        }
-      }
-      
-      if (subChunk) {
-        finalChunks.push(subChunk.trim());
-      }
-    } else {
-      finalChunks.push(chunk);
-    }
-  }
-  
-  return finalChunks.filter((c) => c.length > 50); // Filter out very small chunks
+
+  return chunks;
 }
 
 /**
  * Generate embedding for a text chunk using the built-in LLM API
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
+  const baseUrl = process.env.BUILT_IN_FORGE_API_URL?.replace(/\/$/, "");
+  const apiKey = process.env.BUILT_IN_FORGE_API_KEY;
+
+  if (!baseUrl || !apiKey) {
+    throw new Error("Embedding service is not configured. Set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY.");
+  }
+
   try {
-    // Use the built-in embedding model
-    const response = await fetch(`${process.env.BUILT_IN_FORGE_API_URL}/v1/embeddings`, {
+    const response = await fetch(`${baseUrl}/v1/embeddings`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.BUILT_IN_FORGE_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: "text-embedding-3-small",
@@ -121,20 +104,28 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     });
 
     if (!response.ok) {
-      throw new Error(`Embedding API error: ${response.statusText}`);
+      throw new Error(`Embedding API returned HTTP ${response.status}`);
     }
 
-    const data = await response.json();
-    
-    // Extract the embedding vector from the response
-    if (data.data && data.data[0] && data.data[0].embedding) {
-      return data.data[0].embedding;
+    const data = (await response.json()) as {
+      data?: Array<{ embedding?: unknown }>;
+    };
+    const embedding = data.data?.[0]?.embedding;
+
+    if (
+      !Array.isArray(embedding) ||
+      embedding.length === 0 ||
+      !embedding.every((value) => typeof value === "number" && Number.isFinite(value))
+    ) {
+      throw new Error("Embedding API returned an invalid vector");
     }
-    
-    throw new Error("Invalid embedding response format");
+
+    return embedding as number[];
   } catch (error) {
     console.error("Error generating embedding:", error);
-    throw new Error("Failed to generate embedding for chunk");
+    throw error instanceof Error
+      ? error
+      : new Error("Failed to generate embedding for chunk");
   }
 }
 
