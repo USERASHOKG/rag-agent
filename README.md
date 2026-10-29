@@ -271,17 +271,20 @@ VITE_FRONTEND_FORGE_API_KEY=your-frontend-key
 VITE_FRONTEND_FORGE_API_URL=https://api.manus.im/forge
 ```
 
-## 🤝 Contributing
+## Open source and community contributions
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+RAG Agent is released under the [MIT License](LICENSE). Contributions from the community are welcome, including bug fixes, tests, documentation, UI/accessibility improvements, retrieval quality improvements, and new features.
 
-## 📄 License
+- Read the [Contributing Guide](CONTRIBUTING.md) before opening a pull request.
+- Follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+- [Report a bug](https://github.com/USERASHOKG/rag-agent/issues/new?template=bug_report.md) or [suggest a feature](https://github.com/USERASHOKG/rag-agent/issues/new?template=feature_request.md).
+- For substantial changes, open an issue first so the approach can be discussed.
 
-This project is open source and available under the MIT License.
+All contributions are reviewed before merging. Please do not include secrets, private documents, or credentials in commits or issues.
 
-## 🙋 Support
+## Support
 
-For issues, questions, or suggestions, please open an issue on GitHub.
+For questions or suggestions, open a GitHub issue.
 
 ---
 
