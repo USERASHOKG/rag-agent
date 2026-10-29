@@ -1,33 +1,13 @@
 // Document processing utilities for RAG pipeline
 
 /**
- * Extract searchable text from a PDF.
- * pdf-parse v2 supports in-memory buffers and must be destroyed after parsing.
+ * PDF extraction is intentionally rejected until a PDF parser is installed.
+ * Never embed raw PDF bytes as if they were readable document text.
  */
-export async function extractTextFromPDF(fileBuffer: Buffer): Promise<string> {
-  const { PDFParse } = await import("pdf-parse");
-  const parser = new PDFParse({ data: fileBuffer });
-
-  try {
-    const result = await parser.getText();
-    const text = result.text?.trim() ?? "";
-
-    if (!text) {
-      throw new Error(
-        "No selectable text found in this PDF. If it is a scanned document, OCR is required."
-      );
-    }
-
-    return text;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("No selectable text")) {
-      throw error;
-    }
-    console.error("Error extracting PDF text:", error);
-    throw new Error("Could not read this PDF. Check that it is a valid, unencrypted PDF.");
-  } finally {
-    await parser.destroy();
-  }
+export async function extractTextFromPDF(_fileBuffer: Buffer): Promise<string> {
+  throw new Error(
+    "PDF text extraction is not configured yet. Upload a .txt or .md file for now; PDF parser support is the next required setup step."
+  );
 }
 
 /**
