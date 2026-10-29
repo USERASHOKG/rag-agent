@@ -98,20 +98,13 @@ export const ragRouter = router({
             continue;
           }
 
-          try {
-            // Generate embedding
-            const embedding = await generateEmbedding(chunkText);
-
-            // Store embedding
-            await createEmbedding({
-              chunkId: chunkId as number,
-              vector: embedding,
-              model: "text-embedding-3-small",
-            });
-          } catch (error) {
-            console.error(`Failed to generate embedding for chunk ${i}:`, error);
-            // Continue processing other chunks even if embedding fails
-          }
+          // Do not silently mark a partially indexed document as successful.
+          const embedding = await generateEmbedding(chunkText);
+          await createEmbedding({
+            chunkId: chunkId as number,
+            vector: embedding,
+            model: "text-embedding-3-small",
+          });
         }
 
         // Update document with correct chunk count
