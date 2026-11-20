@@ -1,29 +1,31 @@
-# 🧠RAG Agent
+# CareerPilot — RAG Document Q&A
+
+A focused **Retrieval-Augmented Generation (RAG)** application for document Q&A. It retrieves relevant source content before generating an answer, so responses stay grounded in the user's documents. This is a RAG assistant, not an autonomous agent.
 
 A sophisticated **Retrieval-Augmented Generation (RAG)** application that enables intelligent document Q&A powered by AI. Upload your documents, ask questions, and get accurate answers grounded in your content with source citations.
 
 ![Landing Page](./docs/screenshots/landing-page.png)
 
-## ✨ Features
+## Features
 
-### 📤 Document Management
+### Document Management
 - **Easy Upload** — Support for PDF and text files with automatic processing
 - **Smart Indexing** — Documents are automatically chunked and indexed with vector embeddings
 - **Document Library** — Manage all your uploaded documents in one place
 - **One-Click Delete** — Remove documents and their associated data instantly
 
-### 🔍 Intelligent Search
+### Semantic Search
 - **Semantic Search** — Uses vector embeddings to find relevant content based on meaning, not just keywords
 - **Cosine Similarity** — Advanced similarity matching for precise document retrieval
 - **Context Awareness** — Retrieves the most relevant chunks from your documents
 
-### 🤖 AI-Powered Responses
+### Grounded Responses
 - **LLM Integration** — Powered by state-of-the-art language models
 - **Source Citations** — Every answer includes references showing which documents were used
 - **Similarity Scores** — See how relevant each source is to your query
 - **Markdown Support** — Responses are formatted with full markdown rendering
 
-### 💬 Chat Experience
+### Chat Experience
 - **Conversation History** — All chats are persisted and retrievable
 - **Per-Document Chats** — Have separate conversations for each document
 - **Real-Time Feedback** — Loading states and user-friendly error messages
@@ -31,7 +33,7 @@ A sophisticated **Retrieval-Augmented Generation (RAG)** application that enable
 
 ![Chat Interface](./docs/screenshots/chat-interface.png)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 22+
@@ -62,7 +64,7 @@ pnpm run dev
 
 The application will be available at `http://localhost:3000`
 
-## 🏗️ Architecture
+## Architecture
 
 ### Tech Stack
 
